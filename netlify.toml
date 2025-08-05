@@ -1,0 +1,14 @@
+[functions]
+  # Ruta relativa a la raíz del proyecto donde se encuentran las funciones de Netlify
+  directory = "netlify/functions"
+
+  # Puedes incluir módulos externos o archivos adicionales si tu función los necesita.
+  # external_node_modules = []
+
+  # El campo included_files se puede usar para incluir archivos que no estén en la carpeta de funciones.
+  # included_files = []
+
+[build]
+  # Directorio de publicación. Aquí definimos la carpeta que Netlify desplegará.
+  # Al especificar ".", indicamos que la raíz del repositorio contiene index.html y el resto del sitio.
+  publish = "."

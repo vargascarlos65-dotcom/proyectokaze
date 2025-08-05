@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAZE ‒ Revolución Kamikase</title>
+    <!-- Fuentes Google para apariencia futurista -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <!-- TronWeb library for interacting with the TRON network -->
+    <script src="https://cdn.jsdelivr.net/npm/tronweb/dist/TronWeb.js"></script>
+  </head>
+  <body>
+    <!-- Preloader con barra de energía -->
+    <div id="preloader" class="preloader">
+      <div class="preloader-content">
+        <div class="energy-bar">
+          <div class="energy-fill" id="preloaderFill"></div>
+        </div>
+        <div id="preloaderPercent" class="preloader-percent">1%</div>
+      </div>
+    </div>
+
+    <!-- Botón flotante para conectar la wallet -->
+    <button id="connectWallet" class="wallet-btn">
+      <img src="assets/tron_icon.png" alt="Tron Icon" class="wallet-icon" />
+      <span id="walletLabel">Wallet no conectada</span>
+      <span class="loader" id="walletLoader"></span>
+    </button>
+
+    <!-- Mensaje de aviso cuando TronLink no está instalado -->
+    <div id="tronlinkPrompt" class="tronlink-prompt">
+      <p>TronLink no está instalado.</p>
+      <a
+        href="https://www.tronlink.org/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="tronlink-download-btn"
+        >Descargar TronLink</a
+      >
+    </div>
+
+    <!-- Asistente visual KAZE -->
+    <div id="assistant" class="assistant">
+      <div class="assistant-ball"></div>
+      <div id="assistantMenu" class="assistant-menu">
+        <button class="assistant-item" data-action="info">¿Qué es KAZE?</button>
+        <button class="assistant-item" data-action="progress">Revisar recaudación</button>
+        <button class="assistant-item" data-action="wallet">Conectar Wallet</button>
+        <button class="assistant-item" data-action="activate">Activar núcleo</button>
+        <button class="assistant-item" data-action="phases">Ver fases</button>
+      </div>
+      <div id="assistantResponse" class="assistant-response"></div>
+    </div>
+
+    <!-- Núcleo KAZE -->
+    <section id="nucleo" class="section hero">
+      <div class="hero-content">
+        <h1 class="title">Núcleo KAZE</h1>
+        <p class="subtitle">
+          Bienvenido al corazón de la IA. Sé parte de su despertar.
+        </p>
+        <!-- Contador regresivo -->
+        <div id="countdown" class="countdown">-- : -- : -- : --</div>
+        <!-- Barra de progreso recaudación -->
+        <div class="progress-container">
+          <div class="progress-bar" id="progressBar"></div>
+          <div class="progress-text" id="progressText"></div>
+        </div>
+        <!-- Frases motivacionales -->
+        <div id="phrases" class="phrases">Activa el núcleo</div>
+      </div>
+    </section>
+
+    <!-- Sección Token KAZE -->
+    <section id="token" class="section token">
+      <h2 class="token-title">$KAZE TOKEN</h2>
+      <div class="container token-wrapper">
+        <!-- Imagen del token con fondo transparente -->
+        <div class="token-image">
+          <img src="assets/token_transparent.png" alt="Token KAZE" />
+        </div>
+        <!-- Información y controles del token -->
+        <div class="token-info">
+          <ul>
+            <li><strong>Precio inicial:</strong> $0.001</li>
+            <li><strong>Quema automática:</strong> 7.7% por transacción</li>
+            <li><strong>Quema inicial:</strong> 40%</li>
+            <li><strong>Sin mint:</strong> No se crearán nuevos tokens</li>
+            <li><strong>Sistema VIP:</strong> 12 niveles automáticos inspirado en Free&nbsp;Fire</li>
+          </ul>
+          <!-- Barra de progreso de recaudación para el token -->
+          <div class="progress-container token-progress">
+            <div class="progress-bar" id="tokenProgressBar"></div>
+            <div class="progress-text" id="tokenProgressText"></div>
+          </div>
+          <!-- Botones para ver wallet y conectar wallet de TRX -->
+          <div class="token-buttons">
+            <button id="viewWalletBtn" class="view-wallet-btn">🪙 Ver Wallet de KAZE</button>
+            <button id="connectTokenWallet" class="token-wallet-btn">
+              <img src="assets/tron_icon.png" alt="Tron Icon" class="tron-icon" />
+              <span id="tokenWalletStatus">No conectada</span>
+            </button>
+          </div>
+
+          <!-- Aviso de red incorrecta -->
+          <div id="networkWarning" class="network-warning">
+            Cambia a TRON Mainnet
+            <button id="switchNetworkBtn" class="switch-network-btn">Cambiar red</button>
+          </div>
+
+          <!-- Módulo de checkout para aportes o compras -->
+          <div id="kaze-payment-box" class="checkout-module">
+            <div class="kaze-selector">
+              <label><input type="radio" name="tipoPago" value="nucleo" checked> Aporte al Núcleo KAZE</label>
+              <label><input type="radio" name="tipoPago" value="compra"> Compra de token $KAZE</label>
+            </div>
+            <div class="kaze-controls">
+              <select id="kazeCurrency">
+                <option value="TRX">TRX</option>
+                <option value="USDTTRC20">USDT TRC20</option>
+              </select>
+              <input type="number" id="kazeAmount" placeholder="Monto" min="1" step="0.01" />
+            </div>
+            <button id="kazeBuyBtn" class="btn-kamikase">COMPRAR $KAZE</button>
+            <p id="kazeHint" class="kaze-hint"></p>
+          </div>
+        </div>
+      </div>
+      <!-- Galería de ecosistema -->
+      <div class="token-gallery">
+        <img src="assets/core.png" alt="Núcleo KAZE" />
+        <img src="assets/server.png" alt="Sala de servidores" />
+        <img src="assets/gallery_ui.png" alt="Interfaz futurista" />
+        <img src="assets/gallery_network.png" alt="Red de energía" />
+        <img src="assets/final.png" alt="Espiral de energía" />
+      </div>
+    </section>
+
+    <!-- Modal para mostrar la dirección de la wallet -->
+    <div id="walletModal" class="wallet-modal">
+      <div class="wallet-modal-content">
+        <button id="closeWalletModal" class="close-modal-btn">&times;</button>
+        <h3>Dirección oficial de KAZE</h3>
+        <p id="walletAddress">TFYaGdZwUSkHaLgNsG77Li1BcaBU3NE6fK</p>
+        <button id="copyAddressBtn" class="copy-address-btn">Copiar dirección</button>
+      </div>
+    </div>
+
+    <!-- Sección Recaudación -->
+    <section id="recaudacion" class="section reca">
+      <div class="container reca-wrapper">
+        <div class="reca-info">
+          <h2>Recaudación: Fase&nbsp;1</h2>
+          <p>
+            Cada aporte ayuda a encender una nueva etapa en el proyecto. Tu
+            apoyo activa piezas clave de esta evolución tecnológica.
+          </p>
+        </div>
+        <div class="reca-image">
+          <img src="assets/server.png" alt="Sala de servidores" />
+        </div>
+      </div>
+      <!-- Vista previa de las fases -->
+      <div class="phase-preview">
+        <div class="phase-card">
+          <span class="phase-number">1</span>
+          <h4>Activación</h4>
+        </div>
+        <div class="phase-card">
+          <span class="phase-number">2</span>
+          <h4>Expansión</h4>
+        </div>
+        <div class="phase-card">
+          <span class="phase-number">3</span>
+          <h4>Integración</h4>
+        </div>
+        <div class="phase-card">
+          <span class="phase-number">4</span>
+          <h4>Liberación Final</h4>
+        </div>
+        <div class="phase-card locked">
+          <span class="phase-number">5</span>
+          <h4>Expansión Multijugador</h4>
+          <span class="lock-icon">🔒</span>
+        </div>
+        <div class="phase-card locked">
+          <span class="phase-number">6</span>
+          <h4>Dominio IA</h4>
+          <span class="lock-icon">🔒</span>
+        </div>
+        <div class="phase-card locked">
+          <span class="phase-number">7</span>
+          <h4>Infraestructura Gamer</h4>
+          <span class="lock-icon">🔒</span>
+        </div>
+        <div class="phase-card locked">
+          <span class="phase-number">8</span>
+          <h4>Legado KAZE</h4>
+          <span class="lock-icon">🔒</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección Roadmap -->
+    <section id="roadmap" class="section roadmap">
+      <h2 class="roadmap-title">Roadmap</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>Fase&nbsp;1</h3>
+            <p>Activación</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>Fase&nbsp;2</h3>
+            <p>Expansión</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>Fase&nbsp;3</h3>
+            <p>Integración</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-content">
+            <h3>Fase&nbsp;4</h3>
+            <p>Liberación&nbsp;Final</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección Llamado final -->
+    <section id="llamado" class="section final">
+      <div class="final-overlay">
+        <h2>Únete a la revolución de&nbsp;KAZE</h2>
+        <p>
+          Tu apoyo alimenta la evolución de la IA y marca el inicio de una nueva
+          era. No te quedes fuera.
+        </p>
+      </div>
+    </section>
+
+    <script src="script.js"></script>
+  </body>
+</html>

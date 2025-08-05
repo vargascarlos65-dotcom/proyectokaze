@@ -1,0 +1,5 @@
+# Netlify redirect rules
+# Estas reglas redirigen rutas cortas a las funciones serverless
+
+/ipn             /.netlify/functions/ipn             200
+/create-payment  /.netlify/functions/create-payment  200

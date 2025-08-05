@@ -1,0 +1,12 @@
+# Encabezados globales para mejorar la seguridad y permitir CORS en funciones
+
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: same-origin
+
+/*/.netlify/functions/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Headers: Content-Type
+  Access-Control-Allow-Methods: POST, OPTIONS
