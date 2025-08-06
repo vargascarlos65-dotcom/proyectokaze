@@ -42,7 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const assistantResponse = document.getElementById('assistantResponse');
 
   // Dirección oficial de KAZE (TRON)
-  const kazeAddress = process.env.KZWL_ADDR;
+const kazeAddress =
+  (typeof process !== 'undefined' && process.env && process.env.KZWL_ADDR)
+    ? process.env.KZWL_ADDR
+    : 'TFYaGdZwUSkHaLgNsG77Li1BcaBU3NE6fK';
   const targetAmount = 1500; // Meta de recaudación en USD
   const tokenTargetAmount = 1000000; // Meta de recaudación del token en USD
   // Estados globales
