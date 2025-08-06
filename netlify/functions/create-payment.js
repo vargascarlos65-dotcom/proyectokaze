@@ -5,7 +5,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...ar
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     // Validaciones básicas
     const value = Number(amount);
     if (!value || isNaN(value) || value <= 0) {
-      return { statusCode: 400, body: 'Invalid amount' };
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid amount' }) };
     }
 
     const supported = ['TRX', 'USDTTRC20'];
@@ -40,25 +40,14 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        // Mismo par precio/moneda que eligió el usuario (TRX o USDTTRC20)
         price_amount: value,
         price_currency: payCurrency,
         pay_currency: payCurrency,
-
-        // *** NUEVO: wallet de destino tomada del entorno ***
         payout_address: process.env.KZWL_ADDR,
-
-        // Identificación del pedido (así sabrás si fue Aporte o Compra)
         order_id,
         order_description,
-
-        // Webhook de confirmación
         ipn_callback_url: ipnUrl,
-
-        // El usuario paga la comisión
         is_fee_paid_by_user: true,
-
-        // (Opcional) URLs de retorno
         success_url: `${baseUrl}/checkout/pending?ref=${encodeURIComponent(order_id)}&ok=1`,
         cancel_url: `${baseUrl}/checkout/pending?ref=${encodeURIComponent(order_id)}&cancel=1`
       })
@@ -75,18 +64,21 @@ exports.handler = async (event) => {
       };
     }
 
-    // Devuelve URL real de la factura
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         invoice_url: data.invoice_url,
-        redirect_url: data.invoice_url, // por compatibilidad con tu frontend
+        redirect_url: data.invoice_url,
         order_id
       })
     };
   } catch (e) {
     console.error('create-payment failed:', e);
-    return { statusCode: 500, body: 'Server error' };
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'Server error', details: e.message })
+    };
   }
 };
