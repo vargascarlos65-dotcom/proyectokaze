@@ -157,20 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
         balanceTrx = balanceSun / 1e6;
         return balanceTrx;
       }
-      // En caso de que TronLink no esté disponible, intenta crear una instancia pública
-      const HttpProvider =
-        (window.TronWeb && window.TronWeb.providers && window.TronWeb.providers.HttpProvider) ||
-        null;
-      if (HttpProvider) {
-        const fullNode = new HttpProvider('https://api.trongrid.io');
-        const solidityNode = new HttpProvider('https://api.trongrid.io');
-        const eventServer = 'https://api.trongrid.io';
-        const tronWebPublic = new window.TronWeb(fullNode, solidityNode, eventServer);
-        const balanceSun = await tronWebPublic.trx.getBalance(kazeAddress);
-        balanceTrx = balanceSun / 1e6;
-        return balanceTrx;
-      }
-      console.warn('TronWeb no está disponible.');
+      // Si TronLink no está disponible, no intentamos crear una instancia propia.
+      // Algunos entornos no exponen un constructor válido en window.TronWeb, por lo que
+      // evitamos llamar a `new window.TronWeb(...)` para prevenir errores. Simplemente
+      // devolvemos 0 y mostramos un aviso en consola.
+      console.warn('TronLink no está listo y no se puede obtener el balance.');
     } catch (error) {
       console.error('Error obteniendo balance:', error);
     }
