@@ -1,84 +1,67 @@
 // netlify/functions/create-payment.js
-// Crea una factura REAL en NOWPayments y devuelve la invoice_url para redirigir al usuario.
-
 const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
 exports.handler = async (event) => {
+  // Solo permitimos POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
     const { amount, currency = 'TRX', tipo = 'compra', orderId } = JSON.parse(event.body || '{}');
-
-    // Validaciones básicas
     const value = Number(amount);
     if (!value || isNaN(value) || value <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Invalid amount' }) };
     }
 
+    // Monedas válidas
     const supported = ['TRX', 'USDTTRC20'];
     const payCurrency = supported.includes(String(currency).toUpperCase())
       ? String(currency).toUpperCase()
       : 'TRX';
 
-    // Dominios/URLs
-    const host = event.headers['x-forwarded-host'] || event.headers.host || 'proyectokaze.com';
-    const proto = event.headers['x-forwarded-proto'] || 'https';
-    const baseUrl = `${proto}://${host}`;
-    const ipnUrl = `${baseUrl}/.netlify/functions/ipn`;
+    // Construimos URLs de retorno basadas en tu dominio
+    const host = event.headers['x-forwarded-host'] || event.headers.host;
+    const protocol = event.headers['x-forwarded-proto'] || 'https';
+    const baseUrl = `${protocol}://${host}`;
+    const successUrl = `${baseUrl}/thanks`;
+    const cancelUrl = `${baseUrl}/thanks`;
 
-    // Identificación del pedido
-    const order_id = orderId || `${tipo}_${Date.now()}`;
-    const order_description = tipo === 'nucleo' ? 'Aporte al Núcleo KAZE' : 'Compra de token $KAZE';
-
-    // Llamada a NOWPayments (usa tu API KEY desde variables de entorno: NOW_API_KEY)
-    const res = await fetch('https://api.nowpayments.io/v1/payment', {
+    // Llamada a NOWPayments
+    const response = await fetch('https://api.nowpayments.io/v1/invoice', {
       method: 'POST',
       headers: {
-        'x-api-key': process.env.NOW_API_KEY,
-        'Content-Type': 'application/json'
+        'x-api-key': process.env.NOWPAYMENTS_API_KEY,
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         price_amount: value,
         price_currency: payCurrency,
         pay_currency: payCurrency,
+        order_description: `Compra tipo ${tipo}`,
         payout_address: process.env.KZWL_ADDR,
-        order_id,
-        order_description,
-        ipn_callback_url: ipnUrl,
-        is_fee_paid_by_user: true,
-        success_url: `${baseUrl}/checkout/pending?ref=${encodeURIComponent(order_id)}&ok=1`,
-        cancel_url: `${baseUrl}/checkout/pending?ref=${encodeURIComponent(order_id)}&cancel=1`
-      })
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      }),
     });
 
-    const data = await res.json().catch(() => ({}));
+    const result = await response.json();
 
-    if (!res.ok || !data?.invoice_url) {
-      console.error('NOWPayments error:', data);
-      return {
-        statusCode: 500,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'NOWPayments error', details: data })
-      };
+    // Devolver el URL de pago si todo va bien
+    if (result.invoice_url) {
+      return { statusCode: 200, body: JSON.stringify({ redirect_url: result.invoice_url }) };
     }
 
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        invoice_url: data.invoice_url,
-        redirect_url: data.invoice_url,
-        order_id
-      })
-    };
-  } catch (e) {
-    console.error('create-payment failed:', e);
+    // La API devolvió un error
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Server error', details: e.message })
+      body: JSON.stringify({ error: 'NOWPayments error', details: result }),
+    };
+  } catch (err) {
+    // Falla inesperada
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal server error', message: err.message }),
     };
   }
 };
