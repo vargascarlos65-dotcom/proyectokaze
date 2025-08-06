@@ -45,6 +45,9 @@ exports.handler = async (event) => {
         price_currency: payCurrency,
         pay_currency: payCurrency,
 
+        // *** NUEVO: wallet de destino tomada del entorno ***
+        payout_address: process.env.KZWL_ADDR,
+
         // Identificación del pedido (así sabrás si fue Aporte o Compra)
         order_id,
         order_description,
