@@ -1,93 +1,81 @@
-/*
- * create-payment.js
- * Función serverless para Netlify que crea una factura en NOWPayments.
- *
- * Esta función espera una solicitud POST con JSON en el cuerpo:
- * {
- *   "amount": <número>,            // Monto que se desea pagar
- *   "currency": "TRX" | "USDTTRC20", // Moneda en que se pagará (TRX por defecto)
- *   "tipo": "compra" | "nucleo"    // Descripción opcional del tipo de compra
- * }
- *
- * Devuelve un JSON con la propiedad `redirect_url` que contiene la URL a la
- * factura generada por NOWPayments. Si ocurre un error, devuelve un JSON
- * con información del error y un statusCode apropiado.
- */
+// netlify/functions/create-payment.js
 
-// Importar dinámicamente node-fetch para evitar errores de require en Netlify
 const fetch = (...args) => import('node-fetch').then(({ default: f }) => f(...args));
 
 exports.handler = async (event) => {
-  // Sólo aceptar solicitudes POST
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
+      body: 'Method not allowed',
     };
   }
 
   try {
     const { amount, currency = 'TRX', tipo = 'compra', orderId } = JSON.parse(event.body || '{}');
 
-    // Validar monto
+    // Validación
     const value = Number(amount);
     if (!value || isNaN(value) || value <= 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid amount' }),
-      };
+      console.error('Monto inválido:', amount);
+      return { statusCode: 400, body: 'Monto inválido' };
     }
 
-    // Asegurar mayúsculas y valores soportados
     const supported = ['TRX', 'USDTTRC20'];
     const payCurrency = supported.includes(String(currency).toUpperCase())
       ? String(currency).toUpperCase()
       : 'TRX';
 
-    // Construir URLs de retorno basadas en el host de la solicitud
-    const host = event.headers['x-forwarded-host'] || event.headers.host;
-    const protocol = event.headers['x-forwarded-proto'] || 'https';
-    const baseUrl = `${protocol}://${host}`;
-    const successUrl = `${baseUrl}/thanks`;
-    const cancelUrl = `${baseUrl}/thanks`;
+    // Datos del entorno
+    const apiKey = process.env.NOWPAYMENTS_API_KEY;
+    if (!apiKey) {
+      console.error('API KEY no configurada');
+      return { statusCode: 500, body: 'API KEY no configurada en el entorno' };
+    }
 
-    // Llamar a NOWPayments para crear la factura
+    // Payload para NOWPayments
+    const body = {
+      price_amount: value,
+      price_currency: payCurrency,
+      pay_currency: payCurrency,
+      ipn_callback_url: 'https://proyectokaze.com/api/ipn',
+      order_id: orderId || `order-${Date.now()}`,
+      order_description: tipo === 'aporte' ? 'Aporte al Núcleo KAZE' : 'Compra de token $KAZE'
+    };
+
+    console.log('Enviando solicitud a NOWPayments con payload:', body);
+
+    // Enviar solicitud
     const response = await fetch('https://api.nowpayments.io/v1/invoice', {
       method: 'POST',
       headers: {
-        'x-api-key': process.env.NOWPAYMENTS_API_KEY,
-        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        price_amount: value,
-        price_currency: payCurrency,
-        pay_currency: payCurrency,
-        order_description: `Compra tipo ${tipo}`,
-        payout_address: process.env.KZWL_ADDR,
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      }),
+      body: JSON.stringify(body)
     });
 
-    const result = await response.json();
+    const data = await response.json();
 
-    // Si NOWPayments devuelve una URL de factura, enviarla al frontend
-    if (result && result.invoice_url) {
+    console.log('Respuesta de NOWPayments:', data);
+
+    if (!response.ok) {
+      console.error('Error en NOWPayments:', data);
       return {
-        statusCode: 200,
-        body: JSON.stringify({ redirect_url: result.invoice_url }),
+        statusCode: 500,
+        body: JSON.stringify({ error: data })
       };
     }
 
-    // Manejar errores de la API
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'NOWPayments error', details: result }),
+      statusCode: 200,
+      body: JSON.stringify({ invoice_url: data.invoice_url })
     };
-  } catch (error) {
+
+  } catch (err) {
+    console.error('Error general en create-payment:', err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error', message: error.message }),
+      body: 'Error interno del servidor'
     };
   }
 };
