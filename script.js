@@ -536,7 +536,7 @@ const kazeAddress =
       kazeBuyBtn.disabled = true;
       if (kazeHint) kazeHint.textContent = 'Creando pedido…';
       try {
-        const response = await fetch('/.netlify/functions/create-checkout', {
+        const response = await fetch('/.netlify/functions/create-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ amount: amountVal, currency, tipo }),
