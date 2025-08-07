@@ -9,8 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const interval = setInterval(() => {
     if (progress < 100) {
       progress++;
-      progressBar.style.width = progress + "%";
-      progressText.innerText = progress + "%";
+      if (progressBar) progressBar.style.width = progress + "%";
+      if (progressText) progressText.innerText = progress + "%";
     } else {
       clearInterval(interval);
       if (preloader) preloader.style.display = "none";
@@ -19,9 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 25);
 
   const buyBtn = document.getElementById("kazeBuyBtn");
+  if (!buyBtn) return;
+
   buyBtn.addEventListener("click", async () => {
-    const amount = parseFloat(document.getElementById("kazeAmount").value);
-    const currency = document.getElementById("kazeCurrency").value;
+    const amount = parseFloat(document.getElementById("kazeAmount")?.value);
+    const currency = document.getElementById("kazeCurrency")?.value;
     const tipo = document.querySelector('input[name="tipoPago"]:checked')?.value || 'compra';
 
     if (!amount || amount <= 0) {
