@@ -1,46 +1,34 @@
-document.addEventListener("DOMContentLoaded", async function () {
-  // 🌀 OCULTAR PRELOADER AL CARGAR
-  const preloader = document.getElementById("preloader");
-  if (preloader) {
-    preloader.style.display = "none";
-  }
+document.addEventListener("DOMContentLoaded", () => {
+  const buyBtn = document.getElementById("kazeBuyBtn");
 
-  // 🧠 CONFIGURACIÓN WALLET TRON
-  const walletBtn = document.getElementById("wallet-btn");
-  const walletStatus = document.getElementById("wallet-status");
-  const tronWebGlobal = window.tronWeb;
-  const KAZE_WALLET = "TFYaGdZwUSkHaLgNsG77Li1BcaBU3NE6fK";
+  buyBtn.addEventListener("click", async () => {
+    const amount = parseFloat(document.getElementById("kazeAmount").value);
+    const currency = document.getElementById("kazeCurrency").value;
+    const tipo = document.querySelector('input[name="tipoPago"]:checked')?.value || 'compra';
 
-  async function connectWallet() {
-    if (window.tronLink) {
-      try {
-        const res = await window.tronLink.request({ method: "tron_requestAccounts" });
-        const address = window.tronWeb.defaultAddress.base58;
-        walletStatus.innerText = "Wallet conectada";
-        walletStatus.style.color = "#00ffcc";
-        walletBtn.style.display = "none";
-        console.log("Wallet conectada:", address);
-      } catch (err) {
-        console.error("Error al conectar wallet:", err);
-      }
-    } else {
-      alert("TronLink no está disponible.");
+    if (!amount || amount <= 0) {
+      alert("Ingresa un monto válido");
+      return;
     }
-  }
 
-  if (walletBtn) {
-    walletBtn.addEventListener("click", connectWallet);
-  }
+    try {
+      const response = await fetch("/.netlify/functions/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, currency, tipo })
+      });
 
-  // 💰 BOTÓN DE COMPRA (simulado o real)
-  const buyBtn = document.getElementById("buy-btn");
-  if (buyBtn) {
-    buyBtn.addEventListener("click", async () => {
-      alert("Compra simulada activada. ¡Pronto versión real! 🔥");
-      // Aquí irá lógica real con create-payment.js si activas NowPayments u otro sistema.
-    });
-  }
+      const data = await response.json();
+      console.log("Respuesta del servidor:", data);
 
-  // 🧪 DEBUG: Confirmar que todo cargó
-  console.log("✅ script_preloader_fix.js cargado correctamente.");
+      if (data.invoice_url) {
+        window.location.href = data.invoice_url; // Redirige al link de pago
+      } else {
+        alert("No se recibió un link de pago válido.");
+      }
+    } catch (error) {
+      console.error("Error al generar pago:", error);
+      alert("Hubo un problema al generar el pago.");
+    }
+  });
 });
