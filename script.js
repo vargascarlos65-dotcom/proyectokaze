@@ -1,34 +1,50 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const buyBtn = document.getElementById("kazeBuyBtn");
 
-  buyBtn.addEventListener("click", async () => {
-    const amount = parseFloat(document.getElementById("kazeAmount").value);
-    const currency = document.getElementById("kazeCurrency").value;
-    const tipo = document.querySelector('input[name="tipoPago"]:checked')?.value || 'compra';
+// script.js final versión segura
 
-    if (!amount || amount <= 0) {
-      alert("Ingresa un monto válido");
+const WALLET_KAZE = "TFYaGdZwUSkHaLgNsG77Li1BcaBU3NE6fK";
+
+// ⚡ Preloader que carga sí o sí
+let progress = 0;
+const progressBar = document.getElementById("progress-bar");
+const progressText = document.getElementById("progress-text");
+
+function simulateLoading() {
+  const interval = setInterval(() => {
+    if (progress < 100) {
+      progress++;
+      progressBar.style.width = progress + "%";
+      progressText.innerText = progress + "%";
+    } else {
+      clearInterval(interval);
+      document.getElementById("preloader").style.display = "none";
+      document.getElementById("main-content").style.display = "block";
+    }
+  }, 25); // Velocidad de carga
+}
+
+// ⚙️ Conexión a Tron y balance
+async function connectWallet() {
+  const walletStatus = document.getElementById("wallet-status");
+  try {
+    if (!window.tronWeb || !window.tronWeb.ready) {
+      walletStatus.innerText = "Wallet no conectada";
       return;
     }
 
-    try {
-      const response = await fetch("/.netlify/functions/create-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, currency, tipo })
-      });
+    const address = window.tronWeb.defaultAddress.base58;
+    walletStatus.innerText = "Wallet conectada: " + address;
 
-      const data = await response.json();
-      console.log("Respuesta del servidor:", data);
+    const balanceSun = await window.tronWeb.trx.getBalance(WALLET_KAZE);
+    const balance = balanceSun / 1e6;
+    document.getElementById("kaze-balance").innerText = balance.toFixed(2) + " $KAZE";
+  } catch (error) {
+    console.error("Error al conectar con Tron:", error);
+    walletStatus.innerText = "Error al conectar wallet";
+  }
+}
 
-      if (data.invoice_url) {
-        window.location.href = data.invoice_url; // Redirige al link de pago
-      } else {
-        alert("No se recibió un link de pago válido.");
-      }
-    } catch (error) {
-      console.error("Error al generar pago:", error);
-      alert("Hubo un problema al generar el pago.");
-    }
-  });
+// 🟢 Iniciar al cargar
+window.addEventListener("load", () => {
+  simulateLoading();
+  setTimeout(connectWallet, 4000); // Intenta conexión después de la carga inicial
 });
