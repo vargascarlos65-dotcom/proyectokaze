@@ -1,6 +1,24 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const buyBtn = document.getElementById("kazeBuyBtn");
 
+document.addEventListener("DOMContentLoaded", () => {
+  const preloader = document.getElementById("preloader");
+  const mainContent = document.getElementById("main-content");
+  const progressBar = document.getElementById("progress-bar");
+  const progressText = document.getElementById("progress-text");
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    if (progress < 100) {
+      progress++;
+      progressBar.style.width = progress + "%";
+      progressText.innerText = progress + "%";
+    } else {
+      clearInterval(interval);
+      if (preloader) preloader.style.display = "none";
+      if (mainContent) mainContent.style.display = "block";
+    }
+  }, 25);
+
+  const buyBtn = document.getElementById("kazeBuyBtn");
   buyBtn.addEventListener("click", async () => {
     const amount = parseFloat(document.getElementById("kazeAmount").value);
     const currency = document.getElementById("kazeCurrency").value;
@@ -22,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Respuesta del servidor:", data);
 
       if (data.invoice_url) {
-        window.location.href = data.invoice_url; // Redirige al link de pago
+        window.location.href = data.invoice_url;
       } else {
         alert("No se recibió un link de pago válido.");
       }
